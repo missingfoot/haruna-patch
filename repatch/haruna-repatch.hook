@@ -1,0 +1,10 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = haruna
+
+[Action]
+Description = Rebuilding Haruna with custom zoom-pan/quit/view-mode patches...
+When = PostTransaction
+Exec = /usr/local/bin/haruna-repatch.sh

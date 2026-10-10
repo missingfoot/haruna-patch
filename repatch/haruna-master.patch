@@ -1,0 +1,453 @@
+diff --git a/src/models/actionsmodel.cpp b/src/models/actionsmodel.cpp
+index e3a5c08f..9cf6bc84 100644
+--- a/src/models/actionsmodel.cpp
++++ b/src/models/actionsmodel.cpp
+@@ -436,6 +436,30 @@ ActionsModel::ActionsModel(QObject *parent)
+     action.description = QString{};
+     m_actions << action;
+ 
++    action.name = u"viewModeNoUiAction"_s;
++    action.text = i18nc("@action", "View: No UI");
++    action.iconName = QString();
++    action.defaultShortcut = Qt::Key_1;
++    action.shortcut = getShortcut(action.name, action.defaultShortcut);
++    action.description = i18nc("@info", "Hide the menu bar, header, footer and window frame");
++    m_actions << action;
++
++    action.name = u"viewModeSeekBarOnlyAction"_s;
++    action.text = i18nc("@action", "View: Seek Bar Only");
++    action.iconName = QString();
++    action.defaultShortcut = Qt::Key_2;
++    action.shortcut = getShortcut(action.name, action.defaultShortcut);
++    action.description = i18nc("@info", "Hide the menu bar and header, show the footer");
++    m_actions << action;
++
++    action.name = u"viewModeFullUiAction"_s;
++    action.text = i18nc("@action", "View: Full UI");
++    action.iconName = QString();
++    action.defaultShortcut = Qt::Key_3;
++    action.shortcut = getShortcut(action.name, action.defaultShortcut);
++    action.description = i18nc("@info", "Show the menu bar, header and footer");
++    m_actions << action;
++
+     action.name = u"togglePlaylistAction"_s;
+     action.text = i18nc("@action", "Playlist");
+     action.iconName = u"view-media-playlist"_s;
+@@ -519,7 +543,7 @@ ActionsModel::ActionsModel(QObject *parent)
+     action.name = u"zoomInAction"_s;
+     action.text = i18nc("@action", "Zoom In");
+     action.iconName = u"zoom-in"_s;
+-    action.defaultShortcut = Qt::CTRL | Qt::Key_Plus;
++    action.defaultShortcut = Qt::Key_Equal;
+     action.shortcut = getShortcut(action.name, action.defaultShortcut);
+     action.description = QString{};
+     m_actions << action;
+@@ -527,7 +551,7 @@ ActionsModel::ActionsModel(QObject *parent)
+     action.name = u"zoomOutAction"_s;
+     action.text = i18nc("@action", "Zoom Out");
+     action.iconName = u"zoom-out"_s;
+-    action.defaultShortcut = Qt::CTRL | Qt::Key_Minus;
++    action.defaultShortcut = Qt::Key_Minus;
+     action.shortcut = getShortcut(action.name, action.defaultShortcut);
+     action.description = QString{};
+     m_actions << action;
+@@ -543,7 +567,7 @@ ActionsModel::ActionsModel(QObject *parent)
+     action.name = u"contrastUpAction"_s;
+     action.text = i18nc("@action", "Increase Contrast");
+     action.iconName = u"contrast"_s;
+-    action.defaultShortcut = Qt::Key_1;
++    action.defaultShortcut = QKeySequence();
+     action.shortcut = getShortcut(action.name, action.defaultShortcut);
+     action.description = QString{};
+     m_actions << action;
+@@ -551,7 +575,7 @@ ActionsModel::ActionsModel(QObject *parent)
+     action.name = u"contrastDownAction"_s;
+     action.text = i18nc("@action", "Decrease Contrast");
+     action.iconName = u"contrast"_s;
+-    action.defaultShortcut = Qt::Key_2;
++    action.defaultShortcut = QKeySequence();
+     action.shortcut = getShortcut(action.name, action.defaultShortcut);
+     action.description = QString{};
+     m_actions << action;
+@@ -567,7 +591,7 @@ ActionsModel::ActionsModel(QObject *parent)
+     action.name = u"brightnessUpAction"_s;
+     action.text = i18nc("@action", "Increase Brightness");
+     action.iconName = u"contrast"_s;
+-    action.defaultShortcut = Qt::Key_3;
++    action.defaultShortcut = QKeySequence();
+     action.shortcut = getShortcut(action.name, action.defaultShortcut);
+     action.description = QString{};
+     m_actions << action;
+diff --git a/src/models/actionsmodel.h b/src/models/actionsmodel.h
+index 8f5649b6..a75ace85 100644
+--- a/src/models/actionsmodel.h
++++ b/src/models/actionsmodel.h
+@@ -131,6 +131,9 @@ Q_SIGNALS:
+     void toggleFullscreenAction();
+     void toggleMenuBarAction();
+     void toggleHeaderAction();
++    void viewModeNoUiAction();
++    void viewModeSeekBarOnlyAction();
++    void viewModeFullUiAction();
+     void togglePlaylistAction();
+     void toggleTranscriptAction();
+     void videoPanXLeftAction();
+diff --git a/src/qml/Actions.qml b/src/qml/Actions.qml
+index fcd37126..633b74de 100644
+--- a/src/qml/Actions.qml
++++ b/src/qml/Actions.qml
+@@ -33,6 +33,15 @@ Item {
+     signal togglePlaylist()
+     signal toggleTranscript()
+ 
++    function setViewMode(showMenuBar: bool, showHeader: bool, showFooter: bool, showWindowFrame: bool, message: string) : void {
++        GeneralSettings.showMenuBar = showMenuBar
++        GeneralSettings.showHeader = showHeader
++        GeneralSettings.showFooter = showFooter
++        GeneralSettings.showWindowFrame = showWindowFrame
++        GeneralSettings.save()
++        root.m_osd.message(message)
++    }
++
+     Instantiator {
+         model: Models.actionsModel
+         delegate: Action {
+@@ -357,6 +366,18 @@ Item {
+             GeneralSettings.save()
+         }
+ 
++        function onViewModeNoUiAction() {
++            root.setViewMode(false, false, false, false, KI18n.i18nc("@info:tooltip", "View: No UI"))
++        }
++
++        function onViewModeSeekBarOnlyAction() {
++            root.setViewMode(false, false, true, true, KI18n.i18nc("@info:tooltip", "View: Seek Bar Only"))
++        }
++
++        function onViewModeFullUiAction() {
++            root.setViewMode(true, true, true, true, KI18n.i18nc("@info:tooltip", "View: Full UI"))
++        }
++
+         function onTogglePlaylistAction() {
+             root.togglePlaylist()
+         }
+@@ -415,6 +436,8 @@ Item {
+ 
+         function onZoomResetAction() {
+             root.m_mpv.setProperty(MpvProperties.VideoZoom, 0)
++            root.m_mpv.setProperty(MpvProperties.VideoPanX, 0)
++            root.m_mpv.setProperty(MpvProperties.VideoPanY, 0)
+             root.m_osd.message(KI18n.i18nc("@info:tooltip", "Zoom: 0"))
+         }
+ 
+diff --git a/src/qml/Footer.qml b/src/qml/Footer.qml
+index 9f3a1c1c..6c3c1562 100644
+--- a/src/qml/Footer.qml
++++ b/src/qml/Footer.qml
+@@ -29,6 +29,8 @@ Item {
+     property alias progressBar: progressBar
+     property string footerState: isFloating ? "hidden" : "visible"
+     property bool isFloating: GeneralSettings.footerStyle === "floating"
++    // whether the footer takes space from the video, a hidden footer only shows in fullscreen
++    property bool reservesSpace: !isFloating && GeneralSettings.showFooter
+     property bool isSmallSize: width < 600
+     property int buttonSize: isSmallSize ? Kirigami.Units.iconSizes.small : Kirigami.Units.iconSizes.smallMedium
+ 
+@@ -303,6 +305,11 @@ Item {
+         }
+ 
+         function floatingState() {
++            const mainWindow = root.Window.window as Main
++            if (!GeneralSettings.showFooter && !mainWindow.isFullScreen()) {
++                root.footerState = "hidden"
++                return
++            }
+             if (GeneralSettings.floatingFooterTrigger === "EveryMouseMovement") {
+                 hideFooterTimer.stop()
+                 root.footerState = "visible"
+@@ -311,7 +318,6 @@ Item {
+                 }
+             } else {
+                 if (root.m_mpv.mouseY > root.m_mpv.height - footer.height * 2) {
+-                    const mainWindow = root.Window.window as Main
+                     if (mainWindow.containsMouse) {
+                         hideFooterTimer.stop()
+                         root.footerState = "visible"
+@@ -324,7 +330,9 @@ Item {
+ 
+         function staticState() {
+             const mainWindow = Window.window as Main
+-            if (!mainWindow.isFullScreen() || (root.m_mpv.mouseY > root.m_mpv.height - footer.height * 2 && mainWindow.containsMouse)) {
++            if (!mainWindow.isFullScreen() && !GeneralSettings.showFooter) {
++                root.footerState = "hidden"
++            } else if (!mainWindow.isFullScreen() || (root.m_mpv.mouseY > root.m_mpv.height - footer.height * 2 && mainWindow.containsMouse)) {
+                 root.footerState = "visible"
+             } else {
+                 root.footerState = "hidden"
+diff --git a/src/qml/Main.qml b/src/qml/Main.qml
+index 0848cf7e..129129c8 100644
+--- a/src/qml/Main.qml
++++ b/src/qml/Main.qml
+@@ -43,6 +43,7 @@ ApplicationWindow {
+     objectName: "HarunaMainWindow"
+ 
+     visible: true
++    flags: GeneralSettings.showWindowFrame ? Qt.Window : Qt.Window | Qt.FramelessWindowHint
+     title: mpv.mediaTitle || KI18n.i18nc("@title:window", "Haruna")
+     width: 1000
+     height: 600
+@@ -108,6 +109,16 @@ ApplicationWindow {
+         function onResizeWindowToVideoChanged() {
+             appWindow.resizeWindow()
+         }
++        function onShowFooterChanged() {
++            appWindow.resizeWindow()
++        }
++        function onShowWindowFrameChanged() {
++            // on Wayland KWin only removes the title bar after the window is mapped again
++            if (SystemUtils.isPlatformWayland() && !GeneralSettings.showWindowFrame
++                    && appWindow.visible && !appWindow.isFullScreen()) {
++                Qt.callLater(appWindow.remapWindow)
++            }
++        }
+         function onColorSchemeChanged() {
+             HarunaApp.activateColorScheme(GeneralSettings.colorScheme)
+         }
+@@ -225,7 +236,7 @@ ApplicationWindow {
+         width: appWindow.contentItem.width
+         height: appWindow.isFullScreen()
+                 ? appWindow.contentItem.height
+-                : appWindow.contentItem.height - (footerItem.isFloating ? 0 : footerItem.height)
++                : appWindow.contentItem.height - (footerItem.reservesSpace ? footerItem.height : 0)
+         anchors.left: playlist.edge === Qt.LeftEdge
+                       ? PlaylistSettings.overlayVideo ? appWindow.contentItem.left : playlist.right
+                       : transcript.right
+@@ -533,6 +544,12 @@ ApplicationWindow {
+         return appWindow.visibility === Window.FullScreen
+     }
+ 
++    function remapWindow() : void {
++        const visibility = appWindow.visibility
++        appWindow.hide()
++        appWindow.visibility = visibility
++    }
++
+     function isMaximized() : bool {
+         return appWindow.visibility === Window.Maximized
+     }
+@@ -561,7 +578,7 @@ ApplicationWindow {
+ 
+         appWindow.width = mpv.videoWidth
+         appWindow.height = mpv.videoHeight
+-                + (footerItem.isFloating ? 0 : footerItem.height)
++                + (footerItem.reservesSpace ? footerItem.height : 0)
+                 + (headerItem.visible ? headerItem.height : 0)
+                 + (menuBar.visible ? menuBar.height : 0)
+     }
+diff --git a/src/qml/Menus/MpvContextMenu.qml b/src/qml/Menus/MpvContextMenu.qml
+index 85179fe3..f7d24c08 100644
+--- a/src/qml/Menus/MpvContextMenu.qml
++++ b/src/qml/Menus/MpvContextMenu.qml
+@@ -69,5 +69,9 @@ Loader {
+         MenuSeparator {}
+ 
+         MenuItem { action: HarunaApp.actions.configureAction }
++
++        MenuSeparator {}
++
++        MenuItem { action: HarunaApp.actions.quitApplicationAction }
+     }
+ }
+\ No newline at end of file
+diff --git a/src/qml/MpvVideo.qml b/src/qml/MpvVideo.qml
+index 950b700c..deaaa234 100644
+--- a/src/qml/MpvVideo.qml
++++ b/src/qml/MpvVideo.qml
+@@ -67,13 +67,108 @@ MpvItem {
+         id: mouseArea
+ 
+         property bool hideCursor: false
++        // middle button actions are triggered on release so that middle click and drag can be used to pan the video
++        property point middlePressPosition
++        property point lastPanPosition
++        property bool middleDragging: false
++        property bool panning: false
++        // like mpc-qt: left button actions are triggered on release, dragging with the left button
++        // moves the window and pressing near the window edges resizes it
++        property point leftPressPosition
++        property bool windowMoving: false
++        property int resizeEdges: 0
++        readonly property int resizeMargin: 10
++
++        function canMoveWindow() : bool {
++            return !root.window.isFullScreen() && !root.window.isMaximized()
++        }
++
++        function edgesAt(x: real, y: real) : int {
++            if (!canMoveWindow()) {
++                return 0
++            }
++            const point = mapToItem(null, x, y)
++            let edges = 0
++            if (point.x < resizeMargin) {
++                edges |= Qt.LeftEdge
++            }
++            if (point.x > root.window.width - resizeMargin) {
++                edges |= Qt.RightEdge
++            }
++            if (point.y < resizeMargin) {
++                edges |= Qt.TopEdge
++            }
++            if (point.y > root.window.height - resizeMargin) {
++                edges |= Qt.BottomEdge
++            }
++            return edges
++        }
++
++        function panVideo(dx: real, dy: real) : void {
++            const zoom = root.getProperty(MpvProperties.VideoZoom)
++            const aspect = root.getProperty(MpvProperties.AspectRatio)
++            if (!(zoom > 0) || !(aspect > 0)) {
++                return
++            }
++            // video-pan-x/y are fractions of the scaled video size,
++            // so divide by the displayed size to make the video follow the cursor
++            const scale = Math.pow(2, zoom)
++            const fitWidth = Math.min(width, height * aspect)
++            const fitHeight = fitWidth / aspect
++            const panX = root.getProperty(MpvProperties.VideoPanX) + dx / (fitWidth * scale)
++            const panY = root.getProperty(MpvProperties.VideoPanY) + dy / (fitHeight * scale)
++            root.setProperty(MpvProperties.VideoPanX, panX)
++            root.setProperty(MpvProperties.VideoPanY, panY)
++            panning = true
++        }
+ 
+         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton | Qt.ForwardButton | Qt.BackButton
+         anchors.fill: parent
+         hoverEnabled: true
+-        cursorShape: hideCursor && root.window.isFullScreen() ? Qt.BlankCursor : Qt.ArrowCursor
++        cursorShape: {
++            if (panning) {
++                return Qt.ClosedHandCursor
++            }
++            if (resizeEdges === (Qt.LeftEdge | Qt.TopEdge) || resizeEdges === (Qt.RightEdge | Qt.BottomEdge)) {
++                return Qt.SizeFDiagCursor
++            }
++            if (resizeEdges === (Qt.RightEdge | Qt.TopEdge) || resizeEdges === (Qt.LeftEdge | Qt.BottomEdge)) {
++                return Qt.SizeBDiagCursor
++            }
++            if (resizeEdges & (Qt.LeftEdge | Qt.RightEdge)) {
++                return Qt.SizeHorCursor
++            }
++            if (resizeEdges & (Qt.TopEdge | Qt.BottomEdge)) {
++                return Qt.SizeVerCursor
++            }
++            return hideCursor && root.window.isFullScreen() ? Qt.BlankCursor : Qt.ArrowCursor
++        }
++
++        onPositionChanged: function(mouse) {
++            if (pressedButtons === Qt.NoButton) {
++                resizeEdges = edgesAt(mouseX, mouseY)
++            }
++            if ((pressedButtons & Qt.LeftButton) && !windowMoving && canMoveWindow()) {
++                const distance = Math.abs(mouseX - leftPressPosition.x) + Math.abs(mouseY - leftPressPosition.y)
++                if (distance > Application.styleHints.startDragDistance) {
++                    windowMoving = true
++                    root.window.startSystemMove()
++                    return
++                }
++            }
++            if (pressedButtons & Qt.MiddleButton) {
++                if (!middleDragging) {
++                    const threshold = Application.styleHints.startDragDistance
++                    middleDragging = Math.abs(mouseX - middlePressPosition.x) > threshold
++                            || Math.abs(mouseY - middlePressPosition.y) > threshold
++                }
++                if (middleDragging) {
++                    panVideo(mouseX - lastPanPosition.x, mouseY - lastPanPosition.y)
++                    lastPanPosition = Qt.point(mouseX, mouseY)
++                    return
++                }
++            }
+ 
+-        onPositionChanged: {
+             root.mousePositionChanged(mouseX, mouseY)
+ 
+             hideCursor = false
+@@ -118,9 +213,19 @@ MpvItem {
+             let actionName
+             let modifier = mouse.modifiers
+             if (mouse.button === Qt.LeftButton) {
+-                actionName = model.getAction(Qt.LeftButton, modifier)
++                leftPressPosition = Qt.point(mouse.x, mouse.y)
++                windowMoving = false
++                if (resizeEdges !== 0) {
++                    // the release after a resize must not trigger the left button action
++                    windowMoving = true
++                    root.window.startSystemResize(resizeEdges)
++                }
++                return
+             } else if (mouse.button === Qt.MiddleButton) {
+-                actionName = model.getAction(Qt.MiddleButton, modifier)
++                middlePressPosition = Qt.point(mouse.x, mouse.y)
++                lastPanPosition = middlePressPosition
++                middleDragging = false
++                return
+             } else if (mouse.button === Qt.RightButton) {
+                 actionName = model.getAction(Qt.RightButton, modifier)
+             } else if (mouse.button === Qt.ForwardButton) {
+@@ -134,6 +239,37 @@ MpvItem {
+             }
+         }
+ 
++        onReleased: function(mouse) {
++            if (mouse.button === Qt.LeftButton) {
++                const wasMoving = windowMoving
++                windowMoving = false
++                if (wasMoving) {
++                    return
++                }
++            } else if (mouse.button === Qt.MiddleButton) {
++                const wasDragging = middleDragging
++                middleDragging = false
++                panning = false
++                if (wasDragging) {
++                    return
++                }
++            } else {
++                return
++            }
++
++            const actionName = Models.mouseActionsModel.getAction(mouse.button, mouse.modifiers)
++            if (actionName) {
++                HarunaApp.actions[actionName].trigger()
++            }
++        }
++
++        onExited: resizeEdges = 0
++
++        onCanceled: {
++            middleDragging = false
++            panning = false
++        }
++
+         onDoubleClicked: function(mouse) {
+             focus = true
+             const model = Models.mouseActionsModel
+diff --git a/src/settings/generalsettings.kcfg b/src/settings/generalsettings.kcfg
+index 52bc5013..997c6e8b 100644
+--- a/src/settings/generalsettings.kcfg
++++ b/src/settings/generalsettings.kcfg
+@@ -20,6 +20,12 @@
+     <entry name="ShowHeader" type="bool">
+       <default>true</default>
+     </entry>
++    <entry name="ShowFooter" type="bool">
++      <default>true</default>
++    </entry>
++    <entry name="ShowWindowFrame" type="bool">
++      <default>true</default>
++    </entry>
+     <entry name="ShowChapterMarkers" type="bool">
+       <default>true</default>
+     </entry>
